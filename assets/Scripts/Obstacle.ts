@@ -1,4 +1,4 @@
-import { _decorator, CCFloat, Component, Node, Vec3 } from 'cc';
+import { _decorator, CCFloat, CCInteger, Component, Node, Vec3 } from 'cc';
 import { GameController } from './GameController';
 const { ccclass, property } = _decorator;
 
@@ -7,28 +7,43 @@ export class Obstacle extends Component {
     //buat edit kecepatan,batas geser gambar awal, sama posisi gambar baru
     public gameCtrlSpeed = new GameController;
     public gameSpeed: number
+    // buat batas generate vector
     @property({ type: CCFloat }) 
     public maxMovePos: number = -376.331;
     @property({ type: CCFloat }) 
     public newVecPos: number = 385.05
-    @property({ type: CCFloat }) 
-    public pipeWidth: number = 52
-
+    
     start() {
+    }
+    // buat batas randomize posisi y-axis vector
+    @property({ type: CCInteger }) 
+    public maxHeightPos: number = 180;
+    @property({ type: CCInteger }) 
+    public minHeightPos: number = -270;
 
+    // generate
+    generateYPosition(): number {
+        return Math.floor(Math.random() * (this.maxHeightPos - this.minHeightPos)) + this.minHeightPos;
     }
 
     update(deltaTime: number) {
         this.gameSpeed = this.gameCtrlSpeed.speed; // ambil value global dari controller
-        console.log("CURR POS " + this.node.position.x);
+        // console.log("CURR POS " + this.node.position.x);
         this.node.translate(new Vec3(-this.gameSpeed*deltaTime,0,0));
 
         // kalo sudah mendekati ujung elemen node, harus regenerate vector baru
         if (this.node.position.x <= this.maxMovePos){
-            console.log("UPDATE POS " + this.node.position.x);
-            this.node.setPosition(new Vec3(this.newVecPos, 0,0));
+            // console.log("UPDATE POS " + this.node.position.x);
+            this.node.setPosition(new Vec3(this.newVecPos, this.generateYPosition(),0));
         }
     }
-}
 
+}
+// scale dari pipa ini bisa diadjust untuk atur difficulty (to be implemented)
+// selector untuk pipa atas dan bawah
+// @property({ type: Node }) public topPipe: Node = null;
+// @property({ type: Node }) public bottomPipe: Node = null;
+// untuk adjust tinggi pipa atas dan bawah
+// @property({ type: CCFloat }) public minYScale: number = 0.5;
+// @property({ type: CCFloat }) public maxYScale: number = 1.5;
 
