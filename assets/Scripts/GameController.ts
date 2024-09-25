@@ -1,8 +1,10 @@
-import { _decorator, Button, CCInteger, Component, director, EventHandler, Node } from 'cc';
+import { __private, _decorator, Button, CCInteger, Component, director, EventHandler, EventKeyboard, input, Input, KeyCode, Node, NodeEventType } from 'cc';
 const { ccclass, property } = _decorator;
 
 import { Ground } from "./Ground";
 import { Background } from './Background';
+import { Scoreboard } from './Scoreboard';
+import { Player } from './Player';
 
 // state untuk reset scoreboard, ganti scene dll
 enum GameState{
@@ -14,10 +16,8 @@ enum GameState{
 @ccclass('GameController')
 export class GameController extends Component {
     // untuk pinpoint button dari scene dengan mudah
-    @property({type:Button})
-    startGame: Button = null;
-    @property({type:Button})
-    restartGame: Button = null;
+    @property({type:Node})
+    restartGame: Node = null;
     // untuk import elemen ground supaya bisa dikontrol speednya
     @property({type:Component})
     public ground:Ground;
@@ -30,26 +30,55 @@ export class GameController extends Component {
     @property({type:CCInteger})
     public pipeSpeed: number = 200;
 
+    // store score dari Score.ts
+    @property({type:Scoreboard})
+    public result: Scoreboard;
+
+    // untuk select node bird(player)
+    @property({type:Player})
+    public player: Player;
     
     protected onLoad(): void {
+
         // untuk start game
-        this.startGame.node.on(Button.EventType.CLICK,()=>{
-            this.startGameScene();
-        });
+        // this.startGame.node.on(Button.EventType.CLICK,()=>{
+        //     this.startGameScene();
+        // });
     }
     
     gameInputListener(){
+        input.on(Input.EventType.KEY_DOWN,this.onKeyDown,this);
+    }
+    onKeyDown(event: EventKeyboard) {
+        switch (event.keyCode) {
+            case KeyCode.KEY_A:
+                this.gameOver();
+                break;
+            case KeyCode.KEY_S:
+                this.result.addScore();
+                break;
+            case KeyCode.KEY_A:
+                this.gameOver();
+                break;
+            case KeyCode.KEY_D:
+                this.start();
+                break;
         
+            default:
+                break;
+        }
+    }
+    gameOver() {
+        // stop animasinya
+        this.speed = 0;
+        this.pipeSpeed = 0;
+        this.result.showResults; // display hasil skor saat ini
     }
     
-    startGameScene(){
-        director.loadScene('Game');
-    }
     start() {
-        // buat listener untuk tombol
-        const clickEventHandler = new EventHandler();
-
-        // clickEventHandler.target = this.scene
+        this.speed = 200;
+        this.pipeSpeed = 200;
+        // this.
     }
 
     update(deltaTime: number) {
