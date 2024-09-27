@@ -7,7 +7,7 @@ export class Obstacle extends Component {
     //buat edit kecepatan,batas geser gambar awal, sama posisi gambar baru
     public gameCtrlSpeed = new GameController;
     public gameSpeed: number
-    // buat batas generate vector
+    // buat batas generate posisi x-axis dari vector
     @property({ type: CCFloat }) 
     public maxMovePos: number = -376.331;
     @property({ type: CCFloat }) 
@@ -16,24 +16,27 @@ export class Obstacle extends Component {
     start() {
     }
     // buat batas randomize posisi y-axis vector
-    @property({ type: CCInteger }) 
-    public maxHeightPos: number = 180;
-    @property({ type: CCInteger }) 
+    private maxHeightPos: number = 180;
     public minHeightPos: number = -270;
 
     // generate
     generateYPosition(): number {
-        return Math.floor(Math.random() * (this.maxHeightPos - this.minHeightPos)) + this.minHeightPos;
+        // todo : fix min max ngebug malah ngambil dari x-axis??
+        // console.log('max',this.maxHeightPos)
+        // console.log('min',this.minHeightPos)
+        let pos = Math.floor(Math.random() * (this.maxHeightPos - this.minHeightPos)) + this.minHeightPos
+        return pos;
+        // return Math.floor(Math.random() * (this.maxHeightPos - this.minHeightPos)) + this.minHeightPos;
     }
-
+    
     update(deltaTime: number) {
         this.gameSpeed = this.gameCtrlSpeed.speed; // ambil value global dari controller
         // console.log("CURR POS " + this.node.position.x);
         this.node.translate(new Vec3(-this.gameSpeed*deltaTime,0,0));
-
+        
         // kalo sudah mendekati ujung elemen node, harus regenerate vector baru
         if (this.node.position.x <= this.maxMovePos){
-            // console.log("UPDATE POS " + this.node.position.x);
+            // console.log("UPDATE POS " + this.node.position.y);
             this.node.setPosition(new Vec3(this.newVecPos, this.generateYPosition(),0));
         }
     }
