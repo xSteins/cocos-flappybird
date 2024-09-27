@@ -4,12 +4,10 @@ const { ccclass, property } = _decorator;
 @ccclass('StartGame')
 export class StartGame extends Component {
     start() {
-        this.node.on(Node.EventType.MOUSE_DOWN, (event: EventMouse) =>{
-            director.loadScene('Game');
-        }, this);
+        input.on(Input.EventType.TOUCH_START, this.moveScene, this);
     }
-    onLoad() {
-
+    moveScene(){
+        director.loadScene('Game');
     }
     update(deltaTime: number) {
         

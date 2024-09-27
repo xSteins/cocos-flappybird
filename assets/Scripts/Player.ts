@@ -1,6 +1,5 @@
-import { _decorator, Camera, CCInteger, Collider2D, Component, Contact2DType, input, Input, Label, Node, RenderTexture, Sprite, SpriteFrame, Vec3, view } from 'cc';
+import { _decorator, Camera, CCInteger, Collider2D, Component, Contact2DType, input, Input, Label, Node, RenderTexture, RigidBody2D, Sprite, SpriteFrame, Vec3, view } from 'cc';
 const { ccclass, property } = _decorator;
-import { GameController } from './GameController';
 
 @ccclass('Player')
 export class Player extends Component {
@@ -16,6 +15,19 @@ export class Player extends Component {
         let collider = this.getComponent(Collider2D);
         if (collider){
             collider.on(Contact2DType.BEGIN_CONTACT, this.onContact,this)
+        }
+
+        // Get Collider2D and RigidBody2D components
+        let rigidBody = this.getComponent(RigidBody2D);
+        
+        if (collider && rigidBody) {
+            collider.enabled = true; // Make sure collider is enabled
+            rigidBody.enabledContactListener = true; // Enable contact listener on the RigidBody2D
+
+            // Listen for collision contact
+            collider.on(Contact2DType.BEGIN_CONTACT, this.onContact, this);
+        } else {
+            console.error('Collider2D or RigidBody2D not found on bird');
         }
     }
     moveBirdPosition(){

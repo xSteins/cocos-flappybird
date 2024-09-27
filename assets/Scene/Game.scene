@@ -399,7 +399,7 @@
     "_priority": 0,
     "_fov": 45,
     "_fovAxis": 0,
-    "_orthoHeight": 501.74757281553394,
+    "_orthoHeight": 479.99999999999994,
     "_near": 0,
     "_far": 1000,
     "_color": {
@@ -2148,7 +2148,7 @@
     "_group": 1,
     "_density": 1,
     "_sensor": true,
-    "_friction": 0.2,
+    "_friction": 1,
     "_restitution": 0,
     "_offset": {
       "__type__": "cc.Vec2",
@@ -2177,7 +2177,7 @@
     "awakeOnLoad": true,
     "_group": 1,
     "_type": 0,
-    "_allowSleep": true,
+    "_allowSleep": false,
     "_gravityScale": 0,
     "_linearDamping": 0,
     "_angularDamping": 0,
