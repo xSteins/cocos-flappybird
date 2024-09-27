@@ -1,50 +1,42 @@
-import { _decorator, Component, Label, Node, Sprite } from 'cc';
-const { ccclass, property } = _decorator;
+import { _decorator, Component, director, Label, Node, Sprite } from 'cc'
+const { ccclass, property } = _decorator
 
 @ccclass('Scoreboard')
 export class Scoreboard extends Component {
-    @property({type:Label})
-    public currentLabel: Label;
-    @property({type:Label})
-    public highScore: Label;
-    @property({type:Label})
-    public tryLabel: Label;
-    // @property({type:Node})
-    // public gameOverNode: Node = null;
-    // private gameOverIcon: Sprite = null;
-    
-    public topScore:number = 0;
-    public currentScore:number;
-    start() {
+  @property({ type: Label })
+  public currentLabel: Label
+  @property({ type: Label })
+  public highScore: Label
+  @property({ type: Node })
+  public restartMenu: Node
 
-    }
+  public topScore: number = 0
+  public currentScore: number
+  start () {}
 
-    addScore() {
-        this.updateScore(this.currentScore + 1);
-    }
-    updateScore(num:number){
-        this.currentScore = num;
-        this.currentLabel.string = (''+this.currentScore);
-    }
-    resetScore(num:number){
-        this.updateScore(0);
-        this.hideResults();
-    }
-    showResults(){
-        this.highScore.string = 'High Score is: ' + this.topScore;
-        this.highScore.node.active = true;
-        this.tryLabel.node.active = true;
-        // this.gameOverIcon.node.active = true;
-    }
-    hideResults() {
-        this.highScore.node.active = false;
-        this.tryLabel.node.active = false;
-        // this.gameOverIcon.node.active = false;
-    }
+  addScore () {
+    this.updateScore(this.currentScore + 1)
+  }
+  updateScore (num: number) {
+    this.currentScore = num
+    this.currentLabel.string = '' + this.currentScore
+  }
+  resetScore () {
+    this.updateScore(0)
+    this.node.active = true
+  }
+  showEndGameScreen () {
+    this.restartMenu.active = true
+    // display nilai highest score, ambil dari Scoreboard
+    this.displayHighScore()
+  }
 
-    update(deltaTime: number) {
-        
+  displayHighScore () {
+    if (this.currentScore >= this.topScore) {
+      this.topScore = this.currentScore
     }
+    this.highScore.string = '' + this.topScore
+  }
+
+  update (deltaTime: number) {}
 }
-
-
