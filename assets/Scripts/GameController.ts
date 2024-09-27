@@ -6,13 +6,6 @@ import { Background } from './Background';
 import { Scoreboard } from './Scoreboard';
 import { Player } from './Player';
 
-// state untuk reset scoreboard, ganti scene dll
-enum GameState{
-    GS_INIT,
-    GS_PLAYING,
-    GS_END,
-};
-
 @ccclass('GameController')
 export class GameController extends Component {
     // untuk pinpoint button dari scene dengan mudah
@@ -37,48 +30,23 @@ export class GameController extends Component {
     // untuk select node bird(player)
     @property({type:Player})
     public player: Player;
-    
-    protected onLoad(): void {
 
-        // untuk start game
-        // this.startGame.node.on(Button.EventType.CLICK,()=>{
-        //     this.startGameScene();
-        // });
-    }
-    
-    gameInputListener(){
-        input.on(Input.EventType.KEY_DOWN,this.onKeyDown,this);
-    }
-    onKeyDown(event: EventKeyboard) {
-        switch (event.keyCode) {
-            case KeyCode.KEY_A:
-                this.gameOver();
-                break;
-            case KeyCode.KEY_S:
-                this.result.addScore();
-                break;
-            case KeyCode.KEY_A:
-                this.gameOver();
-                break;
-            case KeyCode.KEY_D:
-                this.start();
-                break;
+    // untuk select node tryAgainPopUp
+    @property({type:Player})
+    public tryAgainPopUp: Node | null = null;
         
-            default:
-                break;
+    triggerGameOver() {
+        if (this.tryAgainPopUp){ // cek nodenya
+            this.tryAgainPopUp.active = true;
         }
-    }
-    gameOver() {
         // stop animasinya
         this.speed = 0;
         this.pipeSpeed = 0;
-        this.result.showResults; // display hasil skor saat ini
     }
     
     start() {
         this.speed = 200;
         this.pipeSpeed = 200;
-        // this.
     }
 
     update(deltaTime: number) {
