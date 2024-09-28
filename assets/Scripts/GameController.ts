@@ -31,8 +31,8 @@ export class GameController extends Component {
   public pipeSpeed: number = 200
 
   // untuk select node bird(player)
-  @property({ type: Player })
-  public player: Player
+  @property({ type: Node })
+  public player: Node
 
   // untuk select node tryAgainPopUp
   @property({ type: Node })
@@ -48,85 +48,68 @@ export class GameController extends Component {
   public currentScore: number
 
   // constructor, inisialisasi kecepatan disini
-  start () {
+  start() {
     this.speed = 200
     this.pipeSpeed = 200
+    this.currentScore = 0;
   }
 
-  startGame () {
+  startGame() {
     director.loadScene('Game')
   }
-  restartGame () {
+  restartGame() {
+    // reset score label
+    // this.resetScore();
     director.loadScene('Game')
     director.resume()
   }
 
-  checkPlayerPassedPipe (nodePipe: Node) {
+  checkPlayerPassedPipe(nodePipe: Node) {
     // karena burung selalu berada di koordinat 0, check kalo koordinat pipa sudah lebih kecil dari x-axis burung baru update scoringnya
-    if (nodePipe.position.x <= this.passCoordinate) {
+    // Cek apakah pipa sudah lewat burung dan belum ditambahkan skornya
+    if (nodePipe.position.x <= this.passCoordinate && !nodePipe['hasPassed']) {
+      //cek flag hasPassed supaya skor tidak ditambah terus menerus
+      this.addScore();  // Tambahkan skor
+      nodePipe['hasPassed'] = true;  // set hasPassed skor tidak nambah terus
     }
   }
 
-  addScore () {
+  addScore() {
     this.updateScore(this.currentScore + 1)
   }
-  updateScore (num: number) {
+  updateScore(num: number) {
     this.currentScore = num
-    this.currentLabel.string = '' + this.currentScore
+    this.currentLabel.string = this.currentScore.toString();
   }
-  resetScore () {
+  resetScore() {
     this.updateScore(0)
-    this.node.active = true
   }
 
-  showEndGameScreen () {
+  showEndGameScreen(player: Node) {
+    // this.currentLabel.string = '';
     // pause game, display node restartmenu
     director.pause()
     // this.node.active = false // hide burungnya
     this.restartMenu.active = true
+    this.player.active = false;
     // display nilai highest score, ambil dari Scoreboard
-    // this.restartGame();
     this.displayHighScore()
   }
 
-  displayHighScore () {
+  displayHighScore() {
     if (this.currentScore >= this.topScore) {
       this.topScore = this.currentScore
     }
-    this.highScore.string = '' + this.topScore
+    this.highScore.string = this.topScore.toString();
   }
 
-  protected onLoad (): void {
-    let scene = director.getScene()
+  protected onLoad(): void { }
 
-    scene.children.forEach(child => {
-      if (child.name === 'Canvas') {
-        let canvas = child
-
-        // Cari node Player di bawah Canvas
-        let player = canvas.getChildByName('Player')
-        if (player) {
-          let collider = player.getComponent(Collider2D)
-          if (collider) {
-            collider.on(
-              Contact2DType.BEGIN_CONTACT,
-              () => {
-                console.log('Contact!')
-              },
-              this
-            )
-          }
-        }
-      }
-    })
-  }
-
-  update (deltaTime: number) {
+  update(deltaTime: number) {
     // untuk update selector node pipa setiap detiknya,
     // karena koordinat selalu berubah sesuai kecepatan game
     // pass ke checkPlayerPassedPipe untuk update scoring
     let scene = director.getScene()
-
     scene.children.forEach(child => {
       if (child.name === 'Canvas') {
         let canvas = child
@@ -140,11 +123,12 @@ export class GameController extends Component {
             this.checkPlayerPassedPipe(canvasChild)
             // console.log('Obstacle2 x pos : ', canvasChild.position.x)
           }
-          if (canvasChild.name === 'Player') {
-          }
         })
-        // console.log(child.name)
       }
     })
+    let collider = this.player.getComponent(Collider2D)
+    if (collider) {
+      collider.on(Contact2DType.BEGIN_CONTACT, this.showEndGameScreen, this)
+    }
   }
 }

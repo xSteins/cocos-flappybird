@@ -18,7 +18,7 @@ export class Obstacle extends Component {
   public minHeightPos: number = -270
 
   // generate
-  generateYPosition (): number {
+  generateYPosition(): number {
     // todo : fix min max ngebug malah ngambil dari x-axis??
     // console.log('max',this.maxHeightPos)
     // console.log('min',this.minHeightPos)
@@ -28,20 +28,25 @@ export class Obstacle extends Component {
     return pos
     // return Math.floor(Math.random() * (this.maxHeightPos - this.minHeightPos)) + this.minHeightPos;
   }
+  resetPipe() {
+    //pindahin update pipa baru ke function terpisah, karena ada flag baru yg harus ditambahkan
+    this.node.setPosition(
+      new Vec3(this.newVecPos, this.generateYPosition(), 0)
+    );
+    this.node['hasPassed'] = false; // Reset flag hasPassed
+  }
 
-  update (deltaTime: number) {
+  update(deltaTime: number) {
     this.gameSpeed = this.gameCtrlSpeed.speed // ambil value global dari controller
     // console.log("CURR POS " + this.node.position.x);
     this.node.translate(new Vec3(-this.gameSpeed * deltaTime, 0, 0))
 
     // kalo sudah mendekati ujung elemen node, harus regenerate vector baru
     if (this.node.position.x <= this.maxMovePos) {
-      // console.log("UPDATE POS " + this.node.position.y);
-      this.node.setPosition(
-        new Vec3(this.newVecPos, this.generateYPosition(), 0)
-      )
+      this.resetPipe()
     }
   }
+
 }
 // scale dari pipa ini bisa diadjust untuk atur difficulty (to be implemented)
 // selector untuk pipa atas dan bawah
