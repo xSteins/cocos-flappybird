@@ -22,30 +22,18 @@ export class Player extends Component {
   @property({ type: Node })
   public restartMenu: Node
 
-  start () {
+  start() {
     // input handling langsung mengarah ke objek bird
     input.on(Input.EventType.TOUCH_START, this.moveBirdPosition, this)
-    // colision handling
-    let collider = this.getComponent(Collider2D)
-    if (collider) {
-      collider.on(Contact2DType.BEGIN_CONTACT, this.onContact, this)
-    }
+
   }
 
-  moveBirdPosition () {
+  moveBirdPosition() {
     this.playerMoveHeight = 340
   }
-  // saat kena pipa, aktifkan restartmenu dan pause
-  onContact () {
-    // pause game, display node restartmenu
-    director.pause()
-    this.node.active = false // hide burungnya
-    this.restartMenu.active = true
-    // display nilai highest score, ambil dari Scoreboard
-    // this.restartGame();
-  }
 
-  update (deltaTime: number) {
+
+  update(deltaTime: number) {
     this.node.translate(new Vec3(0, this.playerMoveHeight * deltaTime, 0))
     this.playerMoveHeight -= this.gravityValue * deltaTime
   }
