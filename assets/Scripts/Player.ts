@@ -1,5 +1,6 @@
 import {
   _decorator,
+  AudioSource,
   CCInteger,
   Collider2D,
   Component,
@@ -30,6 +31,8 @@ export class Player extends Component {
 
   moveBirdPosition() {
     this.playerMoveHeight = 340
+    // tambahan sfx setiap input diterima
+    this.getComponent(AudioSource).playOneShot(this.getComponent(AudioSource).clip);
   }
 
 
