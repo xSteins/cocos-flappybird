@@ -1,6 +1,7 @@
 import {
   __private,
   _decorator,
+  AudioSource,
   CCInteger,
   Collider2D,
   Component,
@@ -13,7 +14,6 @@ const { ccclass, property } = _decorator
 
 import { Ground } from './Ground'
 import { Background } from './Background'
-import { Player } from './Player'
 
 @ccclass('GameController')
 export class GameController extends Component {
@@ -37,6 +37,10 @@ export class GameController extends Component {
   // untuk select node tryAgainPopUp
   @property({ type: Node })
   public restartMenu: Node
+
+  // untuk select audio source saat skor ditambahin
+  @property({ type: Node })
+  public scoreboardNode: Node
 
   private passCoordinate: number = -86.06
   @property({ type: Label })
@@ -64,16 +68,6 @@ export class GameController extends Component {
     director.resume()
   }
 
-  checkPlayerPassedPipe(nodePipe: Node) {
-    // karena burung selalu berada di koordinat 0, check kalo koordinat pipa sudah lebih kecil dari x-axis burung baru update scoringnya
-    // Cek apakah pipa sudah lewat burung dan belum ditambahkan skornya
-    if (nodePipe.position.x <= this.passCoordinate && !nodePipe['hasPassed']) {
-      //cek flag hasPassed supaya skor tidak ditambah terus menerus
-      this.addScore();  // Tambahkan skor
-      nodePipe['hasPassed'] = true;  // set hasPassed skor tidak nambah terus
-    }
-  }
-
   addScore() {
     this.updateScore(this.currentScore + 1)
   }
@@ -85,7 +79,7 @@ export class GameController extends Component {
     this.updateScore(0)
   }
 
-  showEndGameScreen(player: Node) {
+  showEndGameScreen() {
     // this.currentLabel.string = '';
     // pause game, display node restartmenu
     director.pause()
@@ -102,33 +96,67 @@ export class GameController extends Component {
     }
     this.highScore.string = this.topScore.toString();
   }
-
-  protected onLoad(): void { }
+  checkContactNode(selfCollider: Collider2D, otherCollider: Collider2D) {
+    let otherNode = otherCollider.node;
+    // cek collidernya, karena dipakai untuk bird dan collider maka harus
+    //  dicek dulu nama node selfCollidernya
+    if (selfCollider.node.name === 'Scoreboard' &&
+      (otherNode.name === 'BottomPipe' || otherNode.name === 'TopPipe')) {
+      // checking tambahan untuk menghindari duplicate scoring
+      if (!otherNode.parent['hasPassed']) { // jika belum dilewati maka bisa add score
+        this.addScore();
+        otherNode.parent['hasPassed'] = true; // tandain jadi true
+        // penambahan sfx tiap kali collider skor selesai kontak dengan pipa
+        this.scoreboardNode.getComponent(AudioSource).playOneShot(this.scoreboardNode.getComponent(AudioSource).clip);
+      }
+    }
+    if (selfCollider.node.name === 'Bird' &&
+      (otherNode.name === 'BottomPipe' || otherNode.name === 'TopPipe')) {
+      this.showEndGameScreen();
+    }
+  }
 
   update(deltaTime: number) {
-    // untuk update selector node pipa setiap detiknya,
-    // karena koordinat selalu berubah sesuai kecepatan game
-    // pass ke checkPlayerPassedPipe untuk update scoring
-    let scene = director.getScene()
-    scene.children.forEach(child => {
-      if (child.name === 'Canvas') {
-        let canvas = child
-        canvas.children.forEach(canvasChild => {
-          if (canvasChild.name === 'Obstacle') {
-            // check position
-            this.checkPlayerPassedPipe(canvasChild)
-            // console.log('Obstacle1 x pos : ', canvasChild.position.x)
-          }
-          if (canvasChild.name === 'Obstacle2') {
-            this.checkPlayerPassedPipe(canvasChild)
-            // console.log('Obstacle2 x pos : ', canvasChild.position.x)
-          }
-        })
-      }
-    })
-    let collider = this.player.getComponent(Collider2D)
-    if (collider) {
-      collider.on(Contact2DType.BEGIN_CONTACT, this.showEndGameScreen, this)
+    let playerCollider = this.player.getComponent(Collider2D)
+    if (playerCollider) {
+      playerCollider.on(Contact2DType.BEGIN_CONTACT, this.checkContactNode, this)
+    }
+    let scoreboardCollider = this.scoreboardNode.getComponent(Collider2D)
+    if (scoreboardCollider) {
+      scoreboardCollider.on(Contact2DType.END_CONTACT, this.checkContactNode, this)
     }
   }
 }
+// deprecated, cek pipa sudah dilewati atau tidak langsung saja pakai collider
+// checkPlayerPassedPipe(nodePipe: Node) {
+//   // karena burung selalu berada di koordinat 0, check kalo koordinat pipa sudah lebih kecil dari x-axis burung baru update scoringnya
+//   // Cek apakah pipa sudah lewat burung dan belum ditambahkan skornya
+//   if (nodePipe.position.x <= this.passCoordinate && !nodePipe['hasPassed']) {
+//     //cek flag hasPassed supaya skor tidak ditambah terus menerus
+//     this.addScore();  // Tambahkan skor
+//     // buat play sound kalau skornya ditambahin
+//     nodePipe['hasPassed'] = true;  // set hasPassed skor tidak nambah terus
+//     this.scoreboardNode.getComponent(AudioSource).playOneShot(this.scoreboardNode.getComponent(AudioSource).clip);
+//   }
+// }
+// deprecated :
+// untuk update selector node pipa setiap detiknya,
+    // karena koordinat selalu berubah sesuai kecepatan game
+    // pass ke checkPlayerPassedPipe untuk update scoring
+    // let scene = director.getScene()
+    // scene.children.forEach(child => {
+    //   if (child.name === 'Canvas') {
+    //     let canvas = child
+    //     canvas.children.forEach(canvasChild => {
+    //       if (canvasChild.name === 'Obstacle') {
+    //         // check position
+    //         this.checkPlayerPassedPipe(canvasChild)
+    //         // console.log('Obstacle1 x pos : ', canvasChild.position.x)
+    //       }
+    //       if (canvasChild.name === 'Obstacle2') {
+    //         this.checkPlayerPassedPipe(canvasChild)
+    //         // console.log('Obstacle2 x pos : ', canvasChild.position.x)
+    //       }
+    //     })
+    //   }
+    // })
