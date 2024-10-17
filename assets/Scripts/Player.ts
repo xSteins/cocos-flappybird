@@ -2,10 +2,7 @@ import {
   _decorator,
   AudioSource,
   CCInteger,
-  Collider2D,
   Component,
-  Contact2DType,
-  director,
   input,
   Input,
   Node,
@@ -28,11 +25,24 @@ export class Player extends Component {
     input.on(Input.EventType.TOUCH_START, this.onTouchStart, this)
   }
 
+  @property({ type: CCInteger })
+  private maxFallRotation: number = -36; // angle burung ke bawah
+  @property({ type: CCInteger })
+  private upwardRotation: number = 20; // ini angle untuk tiap rotasi ke atas
+
+  // untuk animasi naik turun burung, buffer time ini supaya gak langsung ganti rotasi burungnya
+  private bufferTime: number = 0.2;
+  private bufferTimer: number = 0;
+  private isFalling: boolean = false;
+
   onTouchStart() {
-    this.moveBirdPosition()
+    this.moveBirdPosition();
+    this.bufferTimer = this.bufferTime; // update timer ke default 0.3
   }
 
   moveBirdPosition() {
+    this.node.setRotationFromEuler(0, 0, this.upwardRotation); // kasih rotasi ke atas
+    this.isFalling = false; // reset setiap ada input
     // untuk gerakin playernya
     this.playerMoveHeight = 340;
     // tambahan sfx setiap input diterima
@@ -40,18 +50,31 @@ export class Player extends Component {
   }
 
   generateUpdatePosition(deltaTime: number) {
-    // ini untuk diupdate incremental berdasarkan waktu (todo)
-    // saat ini dipake untuk checking supaya birdnya tidak loncat keatas dan langsung gameover
     return deltaTime * this.playerMoveHeight;
   }
 
   update(deltaTime: number) {
-    // console.log(this.node.getPosition())
-    // console.log("update ", this.generateUpdatePosition(deltaTime))
-    // console.log("gravity ", this.playerMoveHeight - this.gravityValue * deltaTime)
-    if (this.generateUpdatePosition(deltaTime) < 100) {
-      this.node.translate(new Vec3(0, this.generateUpdatePosition(deltaTime), 0))
+    // handling posisi burung, ambil currpos
+    const currPos = this.node.getPosition();
+    const yAxisPos = currPos.y + this.generateUpdatePosition(deltaTime);
+
+    // update burung supaya update keatas berdasar kalkulasi yAxisPos
+    this.node.setPosition(new Vec3(currPos.x, yAxisPos, currPos.z));
+
+    // mekanisme gravitasi
+    this.playerMoveHeight -= this.gravityValue * deltaTime;
+
+    // cek burungnya turun gak
+    if (this.playerMoveHeight < 0) {
+      this.isFalling = true;
     }
-    this.playerMoveHeight -= this.gravityValue * deltaTime
+    // ini edge case kalo buffernya gak habis2 (buat bikin burungnya turun)
+    if (this.bufferTimer > 0) {
+      this.bufferTimer -= deltaTime;
+    }
+    // rotasi burung setelah buffer (burungnya selesai naik)
+    if (this.bufferTimer <= 0 && this.isFalling) {
+      this.node.setRotationFromEuler(0, 0, this.maxFallRotation);
+    }
   }
 }
