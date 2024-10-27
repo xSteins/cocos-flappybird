@@ -7,8 +7,13 @@ import {
   Component,
   Contact2DType,
   director,
+  instantiate,
   Label,
-  Node
+  Node,
+  Prefab,
+  tween,
+  UIOpacity,
+  Vec3
 } from 'cc'
 const { ccclass, property } = _decorator
 
@@ -42,11 +47,8 @@ export class GameController extends Component {
   @property({ type: Node })
   public scoreboardNode: Node
 
-  private passCoordinate: number = -86.06
   @property({ type: Label })
   public currentLabel: Label
-  @property({ type: Label })
-  public highScore: Label
 
   public topScore: number = 0
   public currentScore: number
@@ -58,9 +60,10 @@ export class GameController extends Component {
     this.currentScore = 0;
   }
 
-  startGame() {
+  startGame(event, customEventData) {
     director.loadScene('Game')
   }
+
   restartGame() {
     // reset score label
     // this.resetScore();
@@ -68,8 +71,41 @@ export class GameController extends Component {
     director.resume()
   }
 
-  addScore() {
-    this.updateScore(this.currentScore + 1)
+  @property({ type: Node })
+  public incrementScoreAnim: Node
+
+  showScoreAnimation(points: number) {
+    const incrementScoreAnim = this.incrementScoreAnim;
+
+    // ini buat label, tergantung parameter inputnya 1 atau 2
+    const label = incrementScoreAnim.getComponent(Label);
+    label.string = `+${points}`;
+
+    // buat atur opacity, component UIOpacity didalam nodenya    
+    const scoreUI = incrementScoreAnim.getComponent(UIOpacity) || incrementScoreAnim.addComponent(UIOpacity);
+    scoreUI.opacity = 0;  // awalnya transparan 
+    // tween untuk gerakan ke atas dan efek fade in/out
+    tween(incrementScoreAnim)
+      .to(1, { position: new Vec3(0, 171.721, 0) }, { easing: 'sineOut' })  // ini buat animasi naik keatas
+      .start();
+    // animasiin UIOpacitynya
+    tween(scoreUI)
+      .to(0.2, { opacity: 255 })  // fade in 0.2 detik
+      .delay(0.5)                 // delay sebelum hilang
+      .to(0.2, { opacity: 0 })    // fade out 0.2 detik
+      .call(() => {
+        incrementScoreAnim.setPosition(0, -348.319, 0);  // reset posisi setelah animasi selesai
+      })
+      .start();
+  }
+
+  // number ini harus assignable, karena kalo parent obstacle = SpecialObstacle dia harus +2 langsung
+  addScore(num: number) {
+    // animasi
+    this.showScoreAnimation(num);
+    // add scorenya
+    this.updateScore(this.currentScore + num)
+    // penambahan sfx ada di checkContactNode karena selectornya hanya bisa diakses disana, supaya tidak ribet call 2x disini
   }
   updateScore(num: number) {
     this.currentScore = num
@@ -80,22 +116,13 @@ export class GameController extends Component {
   }
 
   showEndGameScreen() {
-    // this.currentLabel.string = '';
     // pause game, display node restartmenu
     director.pause()
-    // this.node.active = false // hide burungnya
     this.restartMenu.active = true
     this.player.active = false;
-    // display nilai highest score, ambil dari Scoreboard
-    this.displayHighScore()
+    this.playSound(this.restartMenu);
   }
 
-  displayHighScore() {
-    if (this.currentScore >= this.topScore) {
-      this.topScore = this.currentScore
-    }
-    this.highScore.string = this.topScore.toString();
-  }
   checkContactNode(selfCollider: Collider2D, otherCollider: Collider2D) {
     let otherNode = otherCollider.node;
     // cek collidernya, karena dipakai untuk bird dan collider maka harus
@@ -103,16 +130,44 @@ export class GameController extends Component {
     if (selfCollider.node.name === 'Scoreboard' &&
       (otherNode.name === 'BottomPipe' || otherNode.name === 'TopPipe')) {
       // checking tambahan untuk menghindari duplicate scoring
-      if (!otherNode.parent['hasPassed']) { // jika belum dilewati maka bisa add score
-        this.addScore();
+      if (!otherNode.parent['hasPassed'] || !otherNode.parent.parent['hasPassed']) { // edge cases untuk special obstacle
+        // jika belum dilewati maka bisa add score
+        // checking untuk nama parent node, kalo special langsung increment 2
+        const points = (otherNode.parent.name === 'SpecialObstacle') ? 2 : 1;
+        this.addScore(points);
+        this.playSound(this.scoreboardNode);
         otherNode.parent['hasPassed'] = true; // tandain jadi true
-        // penambahan sfx tiap kali collider skor selesai kontak dengan pipa
-        this.scoreboardNode.getComponent(AudioSource).playOneShot(this.scoreboardNode.getComponent(AudioSource).clip);
+        otherNode.parent.parent['hasPassed'] = true; // ini edge cases kalo special obstacle itu isinya 2 dalam 1 parent yg sama
       }
+      // TODO FIX : untuk if ini masih ada error saat pertama kali ketemu yg edge case, setelah 1st passing sudah normal
     }
     if (selfCollider.node.name === 'Bird' &&
       (otherNode.name === 'BottomPipe' || otherNode.name === 'TopPipe')) {
       this.showEndGameScreen();
+      // play hit sound dari obstacle (hit.ogg)
+      this.playSound(otherNode.parent)
+    }
+  }
+
+  public isMuted = false;
+
+  muteGame(event, customEventData) {
+    let btn = event.target.getComponent(Label);
+    // mute secara global, fungsi ini dipanggil pakai tombol di UI
+    if (this.isMuted) {
+      this.isMuted = false;
+      btn.string = 'MUTE GAME';
+    }
+    else {
+      this.isMuted = true;
+      btn.string = 'UNMUTE GAME';
+    }
+  }
+
+  // karena state audio itu global, maka play soundnya pakai method independent dengan select nodenya dulu
+  playSound(component: Node) {
+    if (!this.isMuted) { // jika tidak muted, maka play lagunya
+      component.getComponent(AudioSource).playOneShot(component.getComponent(AudioSource).clip);
     }
   }
 
