@@ -165,10 +165,17 @@ export class GameController extends Component {
     }
   }
 
+
   // karena state audio itu global, maka play soundnya pakai method independent dengan select nodenya dulu
   playSound(component: Node) {
     if (!this.isMuted) { // jika tidak muted, maka play lagunya
       component.getComponent(AudioSource).playOneShot(component.getComponent(AudioSource).clip);
+    }
+  }
+  // todo : fix suara di tombol gk keluar
+  btnPlaySound() {
+    if (!this.isMuted) { // jika tidak muted, maka play lagunya
+      this.node.getComponent(AudioSource).playOneShot(this.node.getComponent(AudioSource).clip);
     }
   }
 
