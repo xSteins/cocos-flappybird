@@ -7,6 +7,7 @@ import {
   Component,
   Contact2DType,
   director,
+  easing,
   instantiate,
   Label,
   Node,
@@ -87,15 +88,15 @@ export class GameController extends Component {
     // tween untuk gerakan ke atas dan efek fade in/out
     tween(incrementScoreAnim)
       .to(1, { position: new Vec3(0, 171.721, 0) }, { easing: 'sineOut' })  // ini buat animasi naik keatas
+      .call(() => {
+        incrementScoreAnim.setPosition(0, -95.273, 0);  // reset posisi ke titik awal setelah naik
+      })
       .start();
     // animasiin UIOpacitynya
     tween(scoreUI)
       .to(0.2, { opacity: 255 })  // fade in 0.2 detik
       .delay(0.5)                 // delay sebelum hilang
       .to(0.2, { opacity: 0 })    // fade out 0.2 detik
-      .call(() => {
-        incrementScoreAnim.setPosition(0, -348.319, 0);  // reset posisi setelah animasi selesai
-      })
       .start();
   }
 
