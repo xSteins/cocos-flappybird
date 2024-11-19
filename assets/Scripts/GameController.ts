@@ -178,6 +178,8 @@ export class GameController extends Component {
 
   @property({ type: Prefab })
   public obstaclePrefab: Prefab = null;
+  @property({ type: Prefab })
+  public specialObsPrefab: Prefab = null;
 
   @property({ type: Label })
   public timerWaktu: Label = null;
@@ -221,7 +223,13 @@ export class GameController extends Component {
       }
       if (this.timer >= this.targetWaktu) {
         this.timer -= this.targetWaktu;
-        this.targetWaktu = Math.max(randomRange(this.minimumBatasBawah, this.minimumBatasAtas), this.targetWaktu - this.penguranganJeda);
+        if (this.targetWaktu > this.minimumBatasBawah) {
+          // kurangi targetnya sebanyak increment 0.25 (penguranganJeda)
+          this.targetWaktu = Math.max(this.targetWaktu - this.penguranganJeda, this.minimumBatasBawah);
+        } else {
+          // kalo udah dibawahnya, random aja (1-2)
+          this.targetWaktu = randomRange(this.minimumBatasBawah, this.minimumBatasAtas);
+        }
         this.createPipe();
       }
     }
