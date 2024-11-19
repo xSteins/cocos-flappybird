@@ -42,8 +42,9 @@ export class Obstacle extends Component {
     this.gameSpeed = this.gameCtrlSpeed.speed
     this.node.translate(new Vec3(-this.gameSpeed * deltaTime, 0, 0))
 
-    if (this.node.position.x <= this.maxMovePos) {
-      this.resetPipe()
-    }
+    // tidak perlu reset dari self / pipanya sendiri, langsung dari gamecontroller
+    // if (this.node.position.x <= this.maxMovePos) {
+    //   this.resetPipe()
+    // }
   }
 }
