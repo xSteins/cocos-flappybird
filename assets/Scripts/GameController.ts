@@ -7,11 +7,11 @@ import {
   Component,
   Contact2DType,
   director,
-  easing,
   instantiate,
   Label,
   Node,
   Prefab,
+  randomRange,
   tween,
   UIOpacity,
   Vec3
@@ -53,16 +53,11 @@ export class GameController extends Component {
 
   public topScore: number = 0
   public currentScore: number
-
-  // constructor, inisialisasi kecepatan disini
-  start() {
-    this.speed = 200
-    this.pipeSpeed = 200
-    this.currentScore = 0;
-  }
+  public isPaused: boolean = false;
 
   startGame(event, customEventData) {
     director.loadScene('Game')
+    this.isPaused = false;
   }
 
   restartGame() {
@@ -70,6 +65,7 @@ export class GameController extends Component {
     // this.resetScore();
     director.loadScene('Game')
     director.resume()
+    this.isPaused = false;
   }
 
   @property({ type: Node })
@@ -122,6 +118,7 @@ export class GameController extends Component {
     this.restartMenu.active = true
     this.player.active = false;
     this.playSound(this.restartMenu);
+    this.isPaused = true;
   }
 
   checkContactNode(selfCollider: Collider2D, otherCollider: Collider2D) {
@@ -165,7 +162,6 @@ export class GameController extends Component {
     }
   }
 
-
   // karena state audio itu global, maka play soundnya pakai method independent dengan select nodenya dulu
   playSound(component: Node) {
     if (!this.isMuted) { // jika tidak muted, maka play lagunya
@@ -179,15 +175,67 @@ export class GameController extends Component {
     }
   }
 
+
+  @property({ type: Prefab })
+  public obstaclePrefab: Prefab = null;
+
+  @property({ type: Label })
+  public timerWaktu: Label = null;
+  private timer: number = 0;
+  private targetWaktu: number = 0;
+  private batasBawah: number = 5;
+  private batasAtas: number = 10;
+
+  private minimumBatasBawah: number = 1;
+  private minimumBatasAtas: number = 2;
+  private penguranganJeda: number = 0.25;
+
+  // constructor, inisialisasi kecepatan disini
+  start() {
+    this.speed = 200
+    this.pipeSpeed = 200
+    this.currentScore = 0;
+    // buat pipa awal untuk detik 0
+    this.createPipe();
+    // generate targetwaktu berdasarkan batas atas & bawah
+    this.targetWaktu = randomRange(this.batasBawah, this.batasAtas);
+  }
+
+  // atur reocurrence kemunculan pipa di fungsi update
   update(deltaTime: number) {
     let playerCollider = this.player.getComponent(Collider2D)
     if (playerCollider) {
-      playerCollider.on(Contact2DType.BEGIN_CONTACT, this.checkContactNode, this)
+      // playerCollider.on(Contact2DType.BEGIN_CONTACT, this.checkContactNode, this)
     }
     let scoreboardCollider = this.scoreboardNode.getComponent(Collider2D)
     if (scoreboardCollider) {
       scoreboardCollider.on(Contact2DType.END_CONTACT, this.checkContactNode, this)
     }
+    // console.log("Pause status : " + this.isPaused);
+    if (!this.isPaused) { // hanya update saat game berjalan / tidak paused
+      // console.log("Timer ", this.timer);
+      this.timer += deltaTime;
+      // supaya mudah debugging tanpa harus ke console, didisplay saja
+      if (this.timerWaktu) {
+        this.timerWaktu.string = this.timer.toFixed(2);
+      }
+      if (this.timer >= this.targetWaktu) {
+        this.timer -= this.targetWaktu;
+        this.targetWaktu = Math.max(randomRange(this.minimumBatasBawah, this.minimumBatasAtas), this.targetWaktu - this.penguranganJeda);
+        this.createPipe();
+      }
+    }
+  }
+  createPipe() {
+    // inisialisasi pipa
+    let objectPipes = instantiate(this.obstaclePrefab);
+    let randomY = randomRange(-270, 180);
+    objectPipes.setPosition(new Vec3(385.05, randomY, 0));
+
+    // tambah prefab
+    objectPipes.setParent(this.node.getParent());
+    // console.log(this.node.getChildByName('Canvas'))
+    this.node['hasPassed'] = false;
   }
 }
 // deprecated, cek pipa sudah dilewati atau tidak langsung saja pakai collider
@@ -204,12 +252,12 @@ export class GameController extends Component {
 // }
 // deprecated :
 // untuk update selector node pipa setiap detiknya,
-    // karena koordinat selalu berubah sesuai kecepatan game
+// karena koordinat selalu berubah sesuai kecepatan game
     // pass ke checkPlayerPassedPipe untuk update scoring
     // let scene = director.getScene()
     // scene.children.forEach(child => {
     //   if (child.name === 'Canvas') {
-    //     let canvas = child
+      //     let canvas = child
     //     canvas.children.forEach(canvasChild => {
     //       if (canvasChild.name === 'Obstacle') {
     //         // check position

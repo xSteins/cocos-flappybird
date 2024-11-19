@@ -5,7 +5,8 @@
       "width": 640,
       "height": 960,
       "fitWidth": false
-    }
+    },
+    "renderPipeline": "22a135d0-b2ef-4c1b-86d2-5bbbd88e4875"
   },
   "custom_joint_texture_layouts": []
 }
