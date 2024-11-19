@@ -205,7 +205,7 @@ export class GameController extends Component {
   update(deltaTime: number) {
     let playerCollider = this.player.getComponent(Collider2D)
     if (playerCollider) {
-      // playerCollider.on(Contact2DType.BEGIN_CONTACT, this.checkContactNode, this)
+      playerCollider.on(Contact2DType.BEGIN_CONTACT, this.checkContactNode, this)
     }
     let scoreboardCollider = this.scoreboardNode.getComponent(Collider2D)
     if (scoreboardCollider) {
