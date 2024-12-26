@@ -5,7 +5,7 @@ const { ccclass, property } = _decorator
 @ccclass('Obstacle')
 export class Obstacle extends Component {
   public gameCtrlSpeed = new GameController()
-  public gameSpeed: number
+  public pipeSpeed: number;
 
   @property({ type: CCFloat })
   public maxMovePos: number = -476.331 // +100 supaya edge case special obstale gak hilang sblum out of view
@@ -39,8 +39,8 @@ export class Obstacle extends Component {
   }
 
   update(deltaTime: number) {
-    this.gameSpeed = this.gameCtrlSpeed.speed
-    this.node.translate(new Vec3(-this.gameSpeed * deltaTime, 0, 0))
+    this.pipeSpeed = this.gameCtrlSpeed.pipeSpeed
+    this.node.translate(new Vec3(-this.pipeSpeed * deltaTime, 0, 0))
 
     if (this.node.position.x <= this.maxMovePos) {
       // this.resetPipe()

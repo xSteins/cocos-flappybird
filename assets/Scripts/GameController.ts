@@ -12,64 +12,144 @@ import {
   Node,
   Prefab,
   randomRange,
+  RigidBody,
   tween,
   UIOpacity,
   Vec3
 } from 'cc'
 const { ccclass, property } = _decorator
 
-import { Ground } from './Ground'
-import { Background } from './Background'
-
 @ccclass('GameController')
 export class GameController extends Component {
-  // untuk pinpoint button dari scene dengan mudah
-  // import elemen ground supaya bisa dikontrol speednya
-  @property({ type: Component })
-  public ground: Ground
-  @property({ type: Component })
-  public Background: Background
-
-  // u/ store kecepatan animasi background dan animasi pipa
-  @property({ type: CCInteger })
-  public speed: number = 200
-  @property({ type: CCInteger })
-  public pipeSpeed: number = 200
-
-  // untuk select node bird(player)
-  @property({ type: Node })
-  public player: Node
-
-  // untuk select node tryAgainPopUp
-  @property({ type: Node })
-  public restartMenu: Node
-
-  // untuk select audio source saat skor ditambahin
-  @property({ type: Node })
-  public scoreboardNode: Node
-
-  @property({ type: Label })
-  public currentLabel: Label
-
   public topScore: number = 0
   public currentScore: number
   public isPaused: boolean = false;
+  public isMuted = false;
+  public easyGame: boolean;
+  public isDaylight: boolean;
+  // untuk fine-tuning spawn pipanya
+  private timer: number = 0;
+  private targetWaktu: number = 0;
+  private batasBawah: number = 5;
+  private batasAtas: number = 10;
+  private minimumBatasBawah: number = 1.8;
+  private minimumBatasAtas: number = 2.3;
+  // ini buat set 5 detik awal invicible
+  private currInvicibleTime: number = 5;
 
+  // ini properties untuk game
+  @property({ type: Node })
+  public ground: Node
+  @property({ type: Node })
+  public background: Node
+  @property({ type: Node })
+  public backgroundNight: Node
+  @property({ type: Node })
+  public canvasNode: Node
+  // untuk select node bird(player)
+  @property({ type: Node })
+  public player: Node
+  // untuk select node tryAgainPopUp
+  @property({ type: Node })
+  public restartMenu: Node
+  // untuk select audio source saat skor ditambahin
+  @property({ type: Node })
+  public scoreboardNode: Node
+  // buat animasi +1 
+  @property({ type: Node })
+  public incrementScoreAnim: Node
+  // u/ store kecepatan animasi background dan animasi pipa
+  public speed: number = 200
+  public pipeSpeed: number = 200
+  // label untuk skornya
+  @property({ type: Label })
+  public liveScore: Label
+  @property({ type: Label })
+  public endgameTopScore: Label
+  @property({ type: Label })
+  public endgameScore: Label
+  @property({ type: Label })
+  public timerWaktu: Label = null;
+
+  // prefab untuk spawn obstacle
+  @property({ type: Prefab })
+  public obstaclePrefab: Prefab = null;
+  @property({ type: Prefab })
+  public specialObsPrefab: Prefab = null;
+  @property({ type: Prefab })
+  public doublePrefab: Prefab = null;
+  @property({ type: Prefab })
+  public slowmoPrefab: Prefab = null;
+
+  // ini buat toggle variable saja, nanti di start() variable ini yg dicek u/ set background
+  toggleBackgroundTheme(event, customEventData) {
+    let toggleButtonState = event.target.getComponent(Label).string
+    // untuk rename backgroundnya
+    if (toggleButtonState === "DAYLIGHT") {
+      event.target.getComponent(Label).string = "NIGHT";
+      this.isDaylight = false;
+      this.activateBackground(this.isDaylight);
+      localStorage.removeItem('isDaylight');
+      localStorage.setItem('isDaylight', JSON.stringify(this.isDaylight));
+      // console.log("night mode")
+      // console.log(localStorage.getItem('isDaylight').toString())
+    }
+    else {
+      event.target.getComponent(Label).string = "DAYLIGHT";
+      this.isDaylight = true;
+      this.activateBackground(this.isDaylight);
+      localStorage.removeItem('isDaylight');
+      localStorage.setItem('isDaylight', JSON.stringify(this.isDaylight));
+      // console.log("day mode")
+      // console.log(localStorage.getItem('isDaylight').toString())
+    }
+  }
+
+  activateBackground(isDaylight: boolean) {
+    if (isDaylight) {
+      this.backgroundNight.active = false;
+      this.background.active = true;
+    }
+    else {
+      this.backgroundNight.active = true;
+      this.background.active = false;
+    }
+  }
+
+  // todo : fix state day & night mode masih ngebug kadang tidak tersimpan 
   startGame(event, customEventData) {
+    // gunakan customEventData untuk set difficulty
+    if (customEventData === 'easy') {
+      this.easyGame = true;
+    }
+    else {
+      this.easyGame = false;
+    }
+    // simpan nilai ke localStorage
+    localStorage.removeItem('easyGame');
+    localStorage.setItem('easyGame', JSON.stringify(this.easyGame));
+
     director.loadScene('Game')
     this.isPaused = false;
   }
 
   restartGame() {
     // reset score label
-    // this.resetScore();
+    this.resetScore();
+    localStorage.removeItem('easyGame');
+    localStorage.removeItem('isDaylight');
+    director.resume();
     director.loadScene('Game')
-    director.resume()
     this.isPaused = false;
   }
 
-  @property({ type: Node })
-  public incrementScoreAnim: Node
+  resetGame() {
+    // reset state yang dipilih
+    localStorage.removeItem('easyGame');
+    localStorage.removeItem('isDaylight');
+    director.loadScene('Startmenu')
+    this.isPaused = false;
+  }
 
   showScoreAnimation(points: number) {
     const incrementScoreAnim = this.incrementScoreAnim;
@@ -98,27 +178,60 @@ export class GameController extends Component {
 
   // number ini harus assignable, karena kalo parent obstacle = SpecialObstacle dia harus +2 langsung
   addScore(num: number) {
-    // animasi
-    this.showScoreAnimation(num);
+    // animasi, cek dulu kalo paused jangan generate animasinya
+    if (!this.isPaused) {
+      this.showScoreAnimation(num);
+    }
     // add scorenya
     this.updateScore(this.currentScore + num)
     // penambahan sfx ada di checkContactNode karena selectornya hanya bisa diakses disana, supaya tidak ribet call 2x disini
   }
   updateScore(num: number) {
     this.currentScore = num
-    this.currentLabel.string = this.currentScore.toString();
+    this.liveScore.string = this.currentScore.toString();
   }
   resetScore() {
-    this.updateScore(0)
+    this.updateScore(0);
+  }
+
+  saveTopScore() {
+    // pakai localStorage di web browser
+    const currentTopScore = localStorage.getItem('topScore');
+    if (!currentTopScore || this.currentScore > parseInt(currentTopScore)) {
+      localStorage.setItem('topScore', this.currentScore.toString());
+      this.topScore = this.currentScore; // update nilai di memori
+    } else {
+      this.topScore = parseInt(currentTopScore); // ambil dari localStorage
+    }
+  }
+
+  getTopScore() {
+    return localStorage.getItem('topScore').toString();
+  }
+
+
+  displayEndingScore() {
+    // save topScorenya, display ke dua label endgame
+    this.saveTopScore();
+    this.endgameScore.string = this.currentScore.toString();
+    this.endgameTopScore.string = this.getTopScore();
   }
 
   showEndGameScreen() {
+    this.displayEndingScore();
     // pause game, display node restartmenu
-    director.pause()
+    // ini currentscore harus di-hide supaya gk overlap dgn tulisan game over
+    this.scoreboardNode.getChildByName('CurrentScore').active = false;
     this.restartMenu.active = true
     this.player.active = false;
     this.playSound(this.restartMenu);
+    this.canvasNode.getComponent(AudioSource).stop();
     this.isPaused = true;
+
+    director.pause()
+    // reset datanya ketika restart
+    localStorage.removeItem('easyGame');
+    localStorage.removeItem('isDaylight');
   }
 
   checkContactNode(selfCollider: Collider2D, otherCollider: Collider2D) {
@@ -126,13 +239,21 @@ export class GameController extends Component {
     // cek collidernya, karena dipakai untuk bird dan collider maka harus
     //  dicek dulu nama node selfCollidernya
     if (selfCollider.node.name === 'Scoreboard' &&
-      (otherNode.name === 'BottomPipe' || otherNode.name === 'TopPipe')) {
+      (otherNode.parent.name === 'EasyObstacle' || otherNode.parent.name === 'HardObstacle')) {
       // checking tambahan untuk menghindari duplicate scoring
       if (!otherNode.parent['hasPassed'] || !otherNode.parent.parent['hasPassed']) { // edge cases untuk special obstacle
         // jika belum dilewati maka bisa add score
         // checking untuk nama parent node, kalo special langsung increment 2
-        const points = (otherNode.parent.name === 'SpecialObstacle') ? 2 : 1;
-        this.addScore(points);
+        const points = (otherNode.parent.name === 'HardObstacle') ? 2 : 1;
+
+        // cek apakah ada multiplier (contoh: double bonus)
+        if (otherNode.parent.getChildByName('double')) {
+          // jika double bonus aktif, kalikan skor dengan 2
+          this.addScore(points * 2);
+        } else {
+          this.addScore(points);
+        }
+
         this.playSound(this.scoreboardNode);
         otherNode.parent['hasPassed'] = true; // tandain jadi true
         otherNode.parent.parent['hasPassed'] = true; // ini edge cases kalo special obstacle itu isinya 2 dalam 1 parent yg sama
@@ -140,14 +261,35 @@ export class GameController extends Component {
       // TODO FIX : untuk if ini masih ada error saat pertama kali ketemu yg edge case, setelah 1st passing sudah normal
     }
     if (selfCollider.node.name === 'Bird' &&
-      (otherNode.name === 'BottomPipe' || otherNode.name === 'TopPipe')) {
+      (otherNode.parent.name === 'EasyObstacle' || otherNode.parent.name === 'HardObstacle')) {
       this.showEndGameScreen();
       // play hit sound dari obstacle (hit.ogg)
       this.playSound(otherNode.parent)
     }
+
+    // Cek apakah terkena bonus slowmo
+    if (selfCollider.node.name === 'Bird' && otherNode.parent.name === 'slowmo') {
+      // aktifkan slowmo effect
+      this.activateSlowmo();
+      // otherNode.parent.destroy(); 
+    }
+  }
+  activateSlowmo() {
+    // simpan kecepatan asli sebelum diubah
+    let originalSpeed = this.speed;
+    let originalPipeSpeed = this.pipeSpeed;
+
+    // atur kecepatan jadi /100 dari kecepatan normal
+    this.speed /= 50;
+    this.pipeSpeed /= 50;
+
+    // kembali ke kecepatan semula setelah 3 detik
+    setTimeout(() => {
+      this.speed = originalSpeed;
+      this.pipeSpeed = originalPipeSpeed;
+    }, 3000);  // 3 detik slowmo
   }
 
-  public isMuted = false;
 
   muteGame(event, customEventData) {
     let btn = event.target.getComponent(Label);
@@ -168,6 +310,11 @@ export class GameController extends Component {
       component.getComponent(AudioSource).playOneShot(component.getComponent(AudioSource).clip);
     }
   }
+  playBGM(component: Node) {
+    if (!this.isMuted) { // jika tidak muted, maka play lagunya
+      component.getComponent(AudioSource).play();
+    }
+  }
   // todo : fix suara di tombol gk keluar
   btnPlaySound() {
     if (!this.isMuted) { // jika tidak muted, maka play lagunya
@@ -175,65 +322,132 @@ export class GameController extends Component {
     }
   }
 
+  updateScrollableElement(node: Node, deltaTime: number, maxMovePos: number, newVecPos: Vec3, parallaxFactor: number = 1) {
+    // gunakan this.speed untuk konsistensi kecepatan
+    const elementSpeed = this.speed * parallaxFactor;
 
-  @property({ type: Prefab })
-  public obstaclePrefab: Prefab = null;
-  @property({ type: Prefab })
-  public specialObsPrefab: Prefab = null;
+    // geser nodenya
+    node.translate(new Vec3(-elementSpeed * deltaTime, 0, 0));
 
-  @property({ type: Label })
-  public timerWaktu: Label = null;
-  private timer: number = 0;
-  private targetWaktu: number = 0;
-  private batasBawah: number = 5;
-  private batasAtas: number = 10;
-
-  private minimumBatasBawah: number = 1;
-  private minimumBatasAtas: number = 2;
-  private penguranganJeda: number = 0.25;
-
-  // constructor, inisialisasi kecepatan disini
+    // reset posisi elemen jika melewati batas
+    if (node.position.x <= maxMovePos) {
+      node.setPosition(newVecPos);
+    }
+  }
+  // constructor, untuk set difficulty dan tipe background ada fallback kalo error balik ke easy mode + daylight
   start() {
-    this.speed = 200
-    this.pipeSpeed = 200
     this.currentScore = 0;
     // buat pipa awal untuk detik 0
     this.createPipe();
     // generate targetwaktu berdasarkan batas atas & bawah
-    this.targetWaktu = randomRange(this.batasBawah, this.batasAtas);
+    this.targetWaktu = randomRange(this.minimumBatasBawah, this.minimumBatasAtas);
+    this.easyGame = JSON.parse(localStorage.getItem('easyGame'));
+    // karena cocos tidak punya handling data antar scene, maka ambil saja dari localStorage, set ke variablenya masing-masing
+    // console.log("easy : " + this.easyGame + " Theme : " + JSON.parse(localStorage.getItem('isDaylight')));
+    // set daylight atau night berdasarkan data
+    this.activateBackground(JSON.parse(localStorage.getItem('isDaylight')))
+    // this.activateBackground(this.isDaylight)
   }
 
   // atur reocurrence kemunculan pipa di fungsi update
   update(deltaTime: number) {
-    let playerCollider = this.player.getComponent(Collider2D)
-    if (playerCollider) {
-      playerCollider.on(Contact2DType.BEGIN_CONTACT, this.checkContactNode, this)
-    }
+    // scoreboard colider tidak perlu timeout, karena asumsi permainan jalan terus
     let scoreboardCollider = this.scoreboardNode.getComponent(Collider2D)
     if (scoreboardCollider) {
       scoreboardCollider.on(Contact2DType.END_CONTACT, this.checkContactNode, this)
     }
-    // console.log("Pause status : " + this.isPaused);
-    if (!this.isPaused) { // hanya update saat game berjalan / tidak paused
-      // console.log("Timer ", this.timer);
-      this.timer += deltaTime;
-      // supaya mudah debugging tanpa harus ke console, didisplay saja
-      if (this.timerWaktu) {
-        this.timerWaktu.string = this.timer.toFixed(2);
+    let playerCollider = this.player.getComponent(Collider2D)
+    if (playerCollider) {
+      // console.log(this.currInvicibleTime -= deltaTime);
+      // ini untuk 5 detik awal set invicible , fungsinya dikosongin aja
+      // kalo diisi tidak smooth nampilin currInvicibleTime-nya, ada delay
+      if ((this.currInvicibleTime -= deltaTime) > 0) {
+        playerCollider.on(Contact2DType.BEGIN_CONTACT, () => { }
+          , this)
       }
-      if (this.timer >= this.targetWaktu) {
-        this.timer -= this.targetWaktu;
-        if (this.targetWaktu > this.minimumBatasBawah) {
-          // kurangi targetnya sebanyak increment 0.25 (penguranganJeda)
-          this.targetWaktu = Math.max(this.targetWaktu - this.penguranganJeda, this.minimumBatasBawah);
-        } else {
-          // kalo udah dibawahnya, random aja (1-2)
-          this.targetWaktu = randomRange(this.minimumBatasBawah, this.minimumBatasAtas);
-        }
-        this.createPipe();
+      else {
+        playerCollider.on(Contact2DType.BEGIN_CONTACT, this.checkContactNode, this)
       }
     }
+
+
+    // console.log("Pause status : " + this.isPaused);
+    if (!this.isPaused) { // hanya update saat game berjalan / tidak paused
+      // this.playSound(this.canvasNode);
+      this.timer += deltaTime;
+      // ini music kadang bisa kadang gak bisa
+      // this.playBGM(this.canvasNode);
+      // set di cocos dashboardnya aj untuk play & loop
+      // console.log(this.isMuted);
+      // if (this.isMuted) {
+      //   this.canvasNode.getComponent(AudioSource).stop;
+      // }
+      // else {
+      //   this.canvasNode.getComponent(AudioSource).play()
+      // }
+
+      if (this.easyGame) {
+        // easy mode: spawn pipe setiap 2.3 detik dengan kecepatan konstan
+        if (this.timer >= 2.3) {
+          this.createPipe();
+          this.timer = 0;
+        }
+      } else {
+        const speedIncrement = 200 / 30;
+        this.speed = Math.min(500, this.speed + speedIncrement * deltaTime);
+        this.pipeSpeed = Math.min(500, this.pipeSpeed + speedIncrement * deltaTime);
+        // console.log(this.speed);
+        // Generate pipa setiap 0.5 detik
+        if (this.timer >= this.targetWaktu) {
+          console.log("Spawn time : " + this.targetWaktu);
+          // ini callback supaya dia generate pipanya random antara pipa biasa atau yang merah double
+          const randomPipeType = Math.random() < 0.5 ? this.createPipe : this.createUniquePipe;
+          randomPipeType.call(this); // Panggil fungsi createPipe atau createUniquePipe
+          // Tetapkan target waktu baru untuk spawn berikutnya
+          this.targetWaktu = randomRange(this.minimumBatasBawah, this.minimumBatasAtas);
+          // console.log(this.timer, this.targetWaktu, randomPipeType);
+          this.timer = 0;
+        }
+      }
+      // karena kalo pake properties kadang tidak terupdate valuenya, hard code saja berdasarkan data berikut 
+      // background 
+      // parallaxFactor = 0.5 (lebih lambat drpd 1)
+      // maxMovePos = -618.078
+      // newVecPosX = -4.704
+      // newVecPosY = 0
+      // ground 
+      // maxMovePos = -639.523
+      // newVecPosX = -319.465
+      // newVecPosY = -480
+      this.updateScrollableElement(this.ground, deltaTime, -639.523, new Vec3(-319.465, -480, 0), 1); // Ground (normal speed)
+      // cek tipe modenya apa
+      if (this.isDaylight) {
+        this.updateScrollableElement(this.background, deltaTime, -618.078, new Vec3(-4.704, 0, 0), 0.1); // Background (parallax)
+      }
+      else {
+        this.updateScrollableElement(this.backgroundNight, deltaTime, -618.078, new Vec3(-4.704, 0, 0), 0.1); // Background (parallax)
+      }
+
+      // tugas prefab sebelumnya : timing
+      // console.log("Timer ", this.timer);
+      // this.timer += deltaTime;
+      // // supaya mudah debugging tanpa harus ke console, didisplay saja
+      // if (this.timerWaktu) {
+      //   this.timerWaktu.string = this.timer.toFixed(2);
+      // }
+      // if (this.timer >= this.targetWaktu) {
+      //   this.timer -= this.targetWaktu;
+      //   if (this.targetWaktu > this.minimumBatasBawah) {
+      //     // kurangi targetnya sebanyak increment 0.25 (penguranganJeda)
+      //     this.targetWaktu = Math.max(this.targetWaktu - this.penguranganJeda, this.minimumBatasBawah);
+      //   } else {
+      //     // kalo udah dibawahnya, random aja (1-2)
+      //     this.targetWaktu = randomRange(this.minimumBatasBawah, this.minimumBatasAtas);
+      //   }
+      // }
+    }
   }
+
   createPipe() {
     // inisialisasi pipa
     let objectPipes = instantiate(this.obstaclePrefab);
@@ -242,7 +456,59 @@ export class GameController extends Component {
 
     // tambah prefab
     objectPipes.setParent(this.node.getParent());
-    // console.log(this.node.getChildByName('Canvas'))
+    // hirarki objek set dibelakang scoreboard supaya tidak menutupi elemen permainan lainnya
+    objectPipes.setSiblingIndex(this.scoreboardNode.getSiblingIndex() - 1)
+
+    // randomise antar 2 tipe bonus
+    if (Math.random() < 0.5) {
+      // 10% dari 50%
+      if (Math.random() < 0.1) {
+        const doubleBonus = instantiate(this.doublePrefab);
+        doubleBonus.setPosition(new Vec3(0, 82, 0));
+        doubleBonus.setParent(objectPipes);
+      }
+    }
+    else {
+      // 40% dari 50%
+      if (Math.random() < 0.4) {
+        const slowmoBonus = instantiate(this.slowmoPrefab); // prefab elemen slowmo
+        slowmoBonus.setPosition(new Vec3(56.615, 82, 0));
+        slowmoBonus.setParent(objectPipes);
+      }
+    }
+
+    this.node['hasPassed'] = false;
+  }
+
+  createUniquePipe() {
+    // inisialisasi pipa
+    let objectPipes = instantiate(this.specialObsPrefab);
+    let randomY = randomRange(-270, 180);
+    objectPipes.setPosition(new Vec3(385.05, randomY, 0));
+
+    // tambah prefab
+    objectPipes.setParent(this.node.getParent());
+    // hirarki objek set dibelakang scoreboard supaya tidak menutupi elemen permainan lainnya
+    objectPipes.setSiblingIndex(this.scoreboardNode.getSiblingIndex() - 1)
+
+    // randomise antar 2 tipe bonus
+    if (Math.random() < 0.5) {
+      // 10% dari 50%
+      if (Math.random() < 0.1) {
+        const doubleBonus = instantiate(this.doublePrefab);
+        doubleBonus.setPosition(new Vec3(0, 82, 0));
+        doubleBonus.setParent(objectPipes);
+      }
+    }
+    else {
+      // 40% dari 50%
+      if (Math.random() < 0.4) {
+        const slowmoBonus = instantiate(this.slowmoPrefab); // prefab elemen slowmo
+        slowmoBonus.setPosition(new Vec3(56.615, 82, 0));
+        slowmoBonus.setParent(objectPipes);
+      }
+    }
+
     this.node['hasPassed'] = false;
   }
 }

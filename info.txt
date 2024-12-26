@@ -1,0 +1,17 @@
+Link github.io :
+https://xsteins.github.io/6182101024-Ralvin-demo-flappy-bird/
+Nama :
+Ralvin Adrian - 6182101024
+Requirement list (UAS) :
+16,13,11,28,17,9,25,29,4,5
+
+16.Buat ada mode easy dan hard / difficulty (done)
+28.Bikin savedata bestscore, tampilkan di home (done)
+9.Bikin parallax background -> parallax artinya apa yg lebih depan bergerak lebih cepat dibanding yg dibelakang (done)
+29.Bikin bird berotasi sesuai dengan kecepatan y bird (done)
+5.Bisa pilih backgorund di home buat saat main (done)
+11.Masukkin background music + tombol mute bgm (done)
+25.5 detik awal invincible (done)
+17.Bikin special item yg bisa dikolek buat terus2an ningkatin multiplier score (done)
+4.Bikin super power buat ngeslowmotion gamenya selama 3s (done)
+13.Bikin animasi saat perpindahan antar scene dari homescreen -> gameplay -> result
