@@ -123,7 +123,10 @@
     "backgroundNight": {
       "__id__": 13
     },
-    "timerWaktu": null,
+    "canvasNode": {
+      "__id__": 5
+    },
+    "alertLabel": null,
     "obstaclePrefab": null,
     "specialObsPrefab": null,
     "doublePrefab": null,
@@ -1150,7 +1153,7 @@
       "__id__": 24
     },
     "_children": [],
-    "_active": true,
+    "_active": false,
     "_components": [
       {
         "__id__": 30
@@ -2470,7 +2473,7 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 429.150390625,
+      "width": 525.859375,
       "height": 205.2
     },
     "_anchorPoint": {
@@ -2500,7 +2503,7 @@
       "b": 0,
       "a": 255
     },
-    "_string": "Info :\n5 Detik awal invicible\nitem(double) : 2x poin\nitem(slowmo): 3s slowmo\n\nbug:\nkalo latar tidak terganti sesuai mode, refresh\nbgm tidak mengikuti state isMuted\nslowmo tidak jln, walau pipeSpeed sudah dipass\nke obstacle.ts",
+    "_string": "Info :\n5 Detik awal invicible\nitem(double) : 2x poin\nitem(slowmo): 3s slowmo\n\nbug:\nkalo latar tidak terganti sesuai mode, refresh\nmute hanya jalan di scene game (disini tombolnya dihapus)\nslowmo tidak jln, walau pipeSpeed sudah dikurangi \ndan di pass ke obstacle.tss",
     "_horizontalAlign": 0,
     "_verticalAlign": 1,
     "_actualFontSize": 20,

@@ -23,7 +23,7 @@
     "_active": true,
     "_components": [],
     "_prefab": {
-      "__id__": 108
+      "__id__": 110
     },
     "_lpos": {
       "__type__": "cc.Vec3",
@@ -54,7 +54,7 @@
     },
     "autoReleaseAssets": false,
     "_globals": {
-      "__id__": 109
+      "__id__": 111
     },
     "_id": "92034148-76d7-446d-ae15-59641291e643"
   },
@@ -71,7 +71,7 @@
         "__id__": 3
       },
       {
-        "__id__": 86
+        "__id__": 88
       },
       {
         "__id__": 16
@@ -89,31 +89,34 @@
         "__id__": 32
       },
       {
-        "__id__": 88
+        "__id__": 90
       },
       {
-        "__id__": 94
+        "__id__": 96
       },
       {
-        "__id__": 100
-      },
-      {
-        "__id__": 103
-      }
-    ],
-    "_active": true,
-    "_components": [
-      {
-        "__id__": 104
+        "__id__": 102
       },
       {
         "__id__": 105
       },
       {
+        "__id__": 86
+      }
+    ],
+    "_active": true,
+    "_components": [
+      {
         "__id__": 106
       },
       {
         "__id__": 107
+      },
+      {
+        "__id__": 108
+      },
+      {
+        "__id__": 109
       }
     ],
     "_prefab": null,
@@ -259,7 +262,7 @@
     "endgameScore": {
       "__id__": 57
     },
-    "timerWaktu": {
+    "alertLabel": {
       "__id__": 85
     },
     "obstaclePrefab": {
@@ -3253,7 +3256,9 @@
     "_name": "",
     "_objFlags": 0,
     "__editorExtras__": {},
-    "node": null,
+    "node": {
+      "__id__": 86
+    },
     "_enabled": true,
     "__prefab": null,
     "_customMaterial": null,
@@ -3266,7 +3271,7 @@
       "b": 0,
       "a": 255
     },
-    "_string": "Info :\n5 Detik awal invicible\nitem(double) : 2x poin\nitem(slowmo): 3s slowmo\n\nbug:\nkalo bg tidak ganti sesuai mode\nnight / day coba direfresh\nlocalStoragenya kadag ngebug\nbgm tidak mengikuti state isMuted\ntidak bisa replay via toggle audiosource",
+    "_string": "Placeholder",
     "_horizontalAlign": 0,
     "_verticalAlign": 1,
     "_actualFontSize": 20,
@@ -3306,7 +3311,77 @@
       "y": 2
     },
     "_shadowBlur": 2,
-    "_id": "93v00CtChMCIXp0foKTGVA"
+    "_id": "acsAslB4JCXLF/w2MM9tI1"
+  },
+  {
+    "__type__": "cc.Node",
+    "_name": "alert",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "_parent": {
+      "__id__": 2
+    },
+    "_children": [],
+    "_active": true,
+    "_components": [
+      {
+        "__id__": 87
+      },
+      {
+        "__id__": 85
+      }
+    ],
+    "_prefab": null,
+    "_lpos": {
+      "__type__": "cc.Vec3",
+      "x": -177.423,
+      "y": -443.148,
+      "z": 0
+    },
+    "_lrot": {
+      "__type__": "cc.Quat",
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 1
+    },
+    "_lscale": {
+      "__type__": "cc.Vec3",
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "_mobility": 0,
+    "_layer": 1073741824,
+    "_euler": {
+      "__type__": "cc.Vec3",
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "_id": "a7N7WBaCpFuLIlBxp1X4GN"
+  },
+  {
+    "__type__": "cc.UITransform",
+    "_name": "",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "node": {
+      "__id__": 86
+    },
+    "_enabled": true,
+    "__prefab": null,
+    "_contentSize": {
+      "__type__": "cc.Size",
+      "width": 105.625,
+      "height": 25.2
+    },
+    "_anchorPoint": {
+      "__type__": "cc.Vec2",
+      "x": 0,
+      "y": 0.5
+    },
+    "_id": "dcgv9DHotH0qUBuULrskSU"
   },
   {
     "__type__": "cc.Node",
@@ -3320,7 +3395,7 @@
     "_active": true,
     "_components": [
       {
-        "__id__": 87
+        "__id__": 89
       }
     ],
     "_prefab": null,
@@ -3359,7 +3434,7 @@
     "_objFlags": 0,
     "__editorExtras__": {},
     "node": {
-      "__id__": 86
+      "__id__": 88
     },
     "_enabled": true,
     "__prefab": null,
@@ -3411,12 +3486,6 @@
     "_active": true,
     "_components": [
       {
-        "__id__": 89
-      },
-      {
-        "__id__": 90
-      },
-      {
         "__id__": 91
       },
       {
@@ -3424,6 +3493,12 @@
       },
       {
         "__id__": 93
+      },
+      {
+        "__id__": 94
+      },
+      {
+        "__id__": 95
       }
     ],
     "_prefab": null,
@@ -3462,7 +3537,7 @@
     "_objFlags": 0,
     "__editorExtras__": {},
     "node": {
-      "__id__": 88
+      "__id__": 90
     },
     "_enabled": true,
     "__prefab": null,
@@ -3484,7 +3559,7 @@
     "_objFlags": 0,
     "__editorExtras__": {},
     "node": {
-      "__id__": 88
+      "__id__": 90
     },
     "_enabled": true,
     "__prefab": null,
@@ -3523,7 +3598,7 @@
     "_objFlags": 0,
     "__editorExtras__": {},
     "node": {
-      "__id__": 88
+      "__id__": 90
     },
     "_enabled": true,
     "__prefab": null,
@@ -3551,7 +3626,7 @@
     "_objFlags": 0,
     "__editorExtras__": {},
     "node": {
-      "__id__": 88
+      "__id__": 90
     },
     "_enabled": true,
     "__prefab": null,
@@ -3579,7 +3654,7 @@
     "_objFlags": 0,
     "__editorExtras__": {},
     "node": {
-      "__id__": 88
+      "__id__": 90
     },
     "_enabled": true,
     "__prefab": null,
@@ -3604,12 +3679,6 @@
     "_active": true,
     "_components": [
       {
-        "__id__": 95
-      },
-      {
-        "__id__": 96
-      },
-      {
         "__id__": 97
       },
       {
@@ -3617,6 +3686,12 @@
       },
       {
         "__id__": 99
+      },
+      {
+        "__id__": 100
+      },
+      {
+        "__id__": 101
       }
     ],
     "_prefab": null,
@@ -3655,7 +3730,7 @@
     "_objFlags": 0,
     "__editorExtras__": {},
     "node": {
-      "__id__": 94
+      "__id__": 96
     },
     "_enabled": true,
     "__prefab": null,
@@ -3677,7 +3752,7 @@
     "_objFlags": 0,
     "__editorExtras__": {},
     "node": {
-      "__id__": 94
+      "__id__": 96
     },
     "_enabled": true,
     "__prefab": null,
@@ -3716,7 +3791,7 @@
     "_objFlags": 0,
     "__editorExtras__": {},
     "node": {
-      "__id__": 94
+      "__id__": 96
     },
     "_enabled": true,
     "__prefab": null,
@@ -3744,7 +3819,7 @@
     "_objFlags": 0,
     "__editorExtras__": {},
     "node": {
-      "__id__": 94
+      "__id__": 96
     },
     "_enabled": true,
     "__prefab": null,
@@ -3772,7 +3847,7 @@
     "_objFlags": 0,
     "__editorExtras__": {},
     "node": {
-      "__id__": 94
+      "__id__": 96
     },
     "_enabled": true,
     "__prefab": null,
@@ -3797,10 +3872,10 @@
     "_active": true,
     "_components": [
       {
-        "__id__": 101
+        "__id__": 103
       },
       {
-        "__id__": 102
+        "__id__": 104
       }
     ],
     "_prefab": null,
@@ -3839,7 +3914,7 @@
     "_objFlags": 0,
     "__editorExtras__": {},
     "node": {
-      "__id__": 100
+      "__id__": 102
     },
     "_enabled": true,
     "__prefab": null,
@@ -3861,7 +3936,7 @@
     "_objFlags": 0,
     "__editorExtras__": {},
     "node": {
-      "__id__": 100
+      "__id__": 102
     },
     "_enabled": true,
     "__prefab": null,
@@ -3991,7 +4066,7 @@
     "_enabled": true,
     "__prefab": null,
     "_cameraComponent": {
-      "__id__": 87
+      "__id__": 89
     },
     "_alignCanvasWithScreen": true,
     "_id": "12O/ljcVlEqLmVm3U2gEOQ"
@@ -4041,8 +4116,8 @@
       "__expectedType__": "cc.AudioClip"
     },
     "_loop": true,
-    "_playOnAwake": true,
-    "_volume": 1,
+    "_playOnAwake": false,
+    "_volume": 0.7,
     "_id": "9eWiJBhUNAobvX2mFkyoqr"
   },
   {
@@ -4056,28 +4131,28 @@
   {
     "__type__": "cc.SceneGlobals",
     "ambient": {
-      "__id__": 110
-    },
-    "shadows": {
-      "__id__": 111
-    },
-    "_skybox": {
       "__id__": 112
     },
-    "fog": {
+    "shadows": {
       "__id__": 113
     },
-    "octree": {
+    "_skybox": {
       "__id__": 114
     },
-    "skin": {
+    "fog": {
       "__id__": 115
     },
-    "lightProbeInfo": {
+    "octree": {
       "__id__": 116
     },
-    "postSettings": {
+    "skin": {
       "__id__": 117
+    },
+    "lightProbeInfo": {
+      "__id__": 118
+    },
+    "postSettings": {
+      "__id__": 119
     },
     "bakedWithStationaryMainLight": false,
     "bakedWithHighpLightmap": false

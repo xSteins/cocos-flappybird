@@ -69,7 +69,7 @@ export class GameController extends Component {
   @property({ type: Label })
   public endgameScore: Label
   @property({ type: Label })
-  public timerWaktu: Label = null;
+  public alertLabel: Label = null;
 
   // prefab untuk spawn obstacle
   @property({ type: Prefab })
@@ -227,6 +227,9 @@ export class GameController extends Component {
     this.playSound(this.restartMenu);
     this.canvasNode.getComponent(AudioSource).stop();
     this.isPaused = true;
+    // override manual bgm
+    const bgmSource = this.canvasNode.getComponent(AudioSource);
+    if (bgmSource) bgmSource.stop(); // Hentikan background music
 
     director.pause()
     // reset datanya ketika restart
@@ -235,43 +238,60 @@ export class GameController extends Component {
   }
 
   checkContactNode(selfCollider: Collider2D, otherCollider: Collider2D) {
-    let otherNode = otherCollider.node;
-    // cek collidernya, karena dipakai untuk bird dan collider maka harus
-    //  dicek dulu nama node selfCollidernya
-    if (selfCollider.node.name === 'Scoreboard' &&
-      (otherNode.parent.name === 'EasyObstacle' || otherNode.parent.name === 'HardObstacle')) {
-      // checking tambahan untuk menghindari duplicate scoring
-      if (!otherNode.parent['hasPassed'] || !otherNode.parent.parent['hasPassed']) { // edge cases untuk special obstacle
-        // jika belum dilewati maka bisa add score
-        // checking untuk nama parent node, kalo special langsung increment 2
-        const points = (otherNode.parent.name === 'HardObstacle') ? 2 : 1;
 
-        // cek apakah ada multiplier (contoh: double bonus)
-        if (otherNode.parent.getChildByName('double')) {
-          // jika double bonus aktif, kalikan skor dengan 2
-          this.addScore(points * 2);
-        } else {
-          this.addScore(points);
+    if (this.isPaused === false) {
+      let otherNode = otherCollider.node;
+      // cek collidernya, karena dipakai untuk bird dan collider maka harus
+      //  dicek dulu nama node selfCollidernya
+      // ambil koordinat bird dan obstaclenya
+      const birdX = selfCollider.node.position.x;
+      const obstacleX = otherNode.parent.position.x;
+
+      if (selfCollider.node.name === 'Scoreboard' &&
+        (otherNode.parent.name === 'EasyObstacle' || otherNode.parent.name === 'HardObstacle')) {
+        // checking tambahan untuk menghindari duplicate scoring
+        if (!otherNode.parent['hasPassed'] || !otherNode.parent.parent['hasPassed']) { // edge cases untuk special obstacle
+          // jika belum dilewati maka bisa add score
+          // checking untuk nama parent node, kalo special langsung increment 2
+          const points = (otherNode.parent.name === 'HardObstacle') ? 2 : 1;
+
+          // cek apakah ada multiplier (contoh: double bonus)
+          if (otherNode.parent.getChildByName('double')) {
+            // jika double bonus aktif, kalikan skor dengan 2
+            this.addScore(points * 2);
+            console.log("Double Points")
+            // this.setAlert("Double points")
+          } else {
+            this.addScore(points);
+          }
+
+          this.playSound(this.scoreboardNode);
+          otherNode.parent['hasPassed'] = true; // tandain jadi true
+          otherNode.parent.parent['hasPassed'] = true; // ini edge cases kalo special obstacle itu isinya 2 dalam 1 parent yg sama
+        }
+        // TODO FIX : untuk if ini masih ada error saat pertama kali ketemu yg edge case, setelah 1st passing sudah normal
+      }
+      // ini memastikan edge case saat colider seharusnya sudah lewat dia tidak akan mengakibatkan endgamescreen
+      if (obstacleX < birdX) {
+        if (selfCollider.node.name === 'Bird' &&
+          (otherNode.parent.name === 'EasyObstacle' || otherNode.parent.name === 'HardObstacle')) {
+          this.showEndGameScreen();
+          // play hit sound dari obstacle (hit.ogg)
+          this.playSound(otherNode.parent)
         }
 
-        this.playSound(this.scoreboardNode);
-        otherNode.parent['hasPassed'] = true; // tandain jadi true
-        otherNode.parent.parent['hasPassed'] = true; // ini edge cases kalo special obstacle itu isinya 2 dalam 1 parent yg sama
+        // Cek apakah terkena bonus slowmo
+        if (selfCollider.node.name === 'Bird' && otherNode.parent.name === 'slowmo') {
+          // aktifkan slowmo effect
+          this.activateSlowmo();
+          console.log("SLOWMO")
+          // this.setAlert("SLOWMO AKTIF");
+          // otherNode.parent.destroy(); 
+        }
       }
-      // TODO FIX : untuk if ini masih ada error saat pertama kali ketemu yg edge case, setelah 1st passing sudah normal
     }
-    if (selfCollider.node.name === 'Bird' &&
-      (otherNode.parent.name === 'EasyObstacle' || otherNode.parent.name === 'HardObstacle')) {
-      this.showEndGameScreen();
-      // play hit sound dari obstacle (hit.ogg)
-      this.playSound(otherNode.parent)
-    }
-
-    // Cek apakah terkena bonus slowmo
-    if (selfCollider.node.name === 'Bird' && otherNode.parent.name === 'slowmo') {
-      // aktifkan slowmo effect
-      this.activateSlowmo();
-      // otherNode.parent.destroy(); 
+    else {
+      console.log("Game tidak dipause / invicible")
     }
   }
   activateSlowmo() {
@@ -280,8 +300,8 @@ export class GameController extends Component {
     let originalPipeSpeed = this.pipeSpeed;
 
     // atur kecepatan jadi /100 dari kecepatan normal
-    this.speed /= 50;
-    this.pipeSpeed /= 50;
+    this.speed /= 500;
+    this.pipeSpeed /= 500;
 
     // kembali ke kecepatan semula setelah 3 detik
     setTimeout(() => {
@@ -290,17 +310,29 @@ export class GameController extends Component {
     }, 3000);  // 3 detik slowmo
   }
 
+  setAlert(params: string) {
+    this.alertLabel.string = params;
+    // reset state setelah 2 detik supaya gak ganggu tampilan
+    setTimeout(() => {
+      this.alertLabel.string = "";
+    }, 2000);
+  }
+
 
   muteGame(event, customEventData) {
     let btn = event.target.getComponent(Label);
+    // tambah logic terpisah u/ set mute/unmute bgm
+    const bgmSource = this.canvasNode.getComponent(AudioSource);
     // mute secara global, fungsi ini dipanggil pakai tombol di UI
     if (this.isMuted) {
       this.isMuted = false;
       btn.string = 'MUTE GAME';
+      if (bgmSource) bgmSource.play();
     }
     else {
       this.isMuted = true;
       btn.string = 'UNMUTE GAME';
+      if (bgmSource) bgmSource.pause();
     }
   }
 
@@ -347,6 +379,12 @@ export class GameController extends Component {
     // set daylight atau night berdasarkan data
     this.activateBackground(JSON.parse(localStorage.getItem('isDaylight')))
     // this.activateBackground(this.isDaylight)
+    // ini call bgm music, supaya bisa override state dari GUI cocos
+    const bgmSource = this.canvasNode.getComponent(AudioSource);
+    if (!this.isMuted && bgmSource) {
+      bgmSource.loop = true; // Set BGM untuk loop
+      bgmSource.play();
+    }
   }
 
   // atur reocurrence kemunculan pipa di fungsi update
@@ -362,8 +400,9 @@ export class GameController extends Component {
       // ini untuk 5 detik awal set invicible , fungsinya dikosongin aja
       // kalo diisi tidak smooth nampilin currInvicibleTime-nya, ada delay
       if ((this.currInvicibleTime -= deltaTime) > 0) {
-        playerCollider.on(Contact2DType.BEGIN_CONTACT, () => { }
-          , this)
+        // set contact callnya set isPaused = false, memastikan edge case ketika colider seharusnya tidak aktif malah aktif
+        playerCollider.on(Contact2DType.BEGIN_CONTACT, () => { this.isPaused = false }, this)
+        this.setAlert(`Invicible selama : ${this.currInvicibleTime.toFixed(2)}`);
       }
       else {
         playerCollider.on(Contact2DType.BEGIN_CONTACT, this.checkContactNode, this)
@@ -428,23 +467,6 @@ export class GameController extends Component {
         this.updateScrollableElement(this.backgroundNight, deltaTime, -618.078, new Vec3(-4.704, 0, 0), 0.1); // Background (parallax)
       }
 
-      // tugas prefab sebelumnya : timing
-      // console.log("Timer ", this.timer);
-      // this.timer += deltaTime;
-      // // supaya mudah debugging tanpa harus ke console, didisplay saja
-      // if (this.timerWaktu) {
-      //   this.timerWaktu.string = this.timer.toFixed(2);
-      // }
-      // if (this.timer >= this.targetWaktu) {
-      //   this.timer -= this.targetWaktu;
-      //   if (this.targetWaktu > this.minimumBatasBawah) {
-      //     // kurangi targetnya sebanyak increment 0.25 (penguranganJeda)
-      //     this.targetWaktu = Math.max(this.targetWaktu - this.penguranganJeda, this.minimumBatasBawah);
-      //   } else {
-      //     // kalo udah dibawahnya, random aja (1-2)
-      //     this.targetWaktu = randomRange(this.minimumBatasBawah, this.minimumBatasAtas);
-      //   }
-      // }
     }
   }
 
@@ -459,23 +481,12 @@ export class GameController extends Component {
     // hirarki objek set dibelakang scoreboard supaya tidak menutupi elemen permainan lainnya
     objectPipes.setSiblingIndex(this.scoreboardNode.getSiblingIndex() - 1)
 
-    // randomise antar 2 tipe bonus
-    if (Math.random() < 0.5) {
-      // 10% dari 50%
-      if (Math.random() < 0.1) {
-        const doubleBonus = instantiate(this.doublePrefab);
-        doubleBonus.setPosition(new Vec3(0, 82, 0));
-        doubleBonus.setParent(objectPipes);
-      }
-    }
-    else {
-      // 40% dari 50%
-      if (Math.random() < 0.4) {
-        const slowmoBonus = instantiate(this.slowmoPrefab); // prefab elemen slowmo
-        slowmoBonus.setPosition(new Vec3(56.615, 82, 0));
-        slowmoBonus.setParent(objectPipes);
-      }
-    }
+    // debug
+    // const doubleBonus = instantiate(this.doublePrefab);
+    // doubleBonus.setPosition(new Vec3(0, 82, 0));
+    // doubleBonus.setParent(objectPipes);
+    // generate bonus
+    this.generateBonusElem(objectPipes);
 
     this.node['hasPassed'] = false;
   }
@@ -491,57 +502,69 @@ export class GameController extends Component {
     // hirarki objek set dibelakang scoreboard supaya tidak menutupi elemen permainan lainnya
     objectPipes.setSiblingIndex(this.scoreboardNode.getSiblingIndex() - 1)
 
+    // debug
+    // const slowmoBonus = instantiate(this.slowmoPrefab);
+    // slowmoBonus.setPosition(new Vec3(56.615, 82, 0));
+    // slowmoBonus.setParent(objectPipes);
+    this.generateBonusElem(objectPipes);
+
+
+    this.node['hasPassed'] = false;
+  }
+  generateBonusElem(objectPipes: Node) {
     // randomise antar 2 tipe bonus
-    if (Math.random() < 0.5) {
-      // 10% dari 50%
-      if (Math.random() < 0.1) {
+    if (this.easyGame) {
+      // kalo easy game kemunculannya 50:50 saja antar 2 ini
+      if (Math.random() < 0.5) {
         const doubleBonus = instantiate(this.doublePrefab);
         doubleBonus.setPosition(new Vec3(0, 82, 0));
         doubleBonus.setParent(objectPipes);
       }
-    }
-    else {
-      // 40% dari 50%
-      if (Math.random() < 0.4) {
-        const slowmoBonus = instantiate(this.slowmoPrefab); // prefab elemen slowmo
+      else {
+        const slowmoBonus = instantiate(this.slowmoPrefab);
         slowmoBonus.setPosition(new Vec3(56.615, 82, 0));
         slowmoBonus.setParent(objectPipes);
       }
     }
+    else {
+      // kalo hard game persentasenya jauh lebih rendah lagi
+      if (Math.random() < 0.5) {
+        // 10% dari 50%
+        if (Math.random() < 0.1) {
+          const doubleBonus = instantiate(this.doublePrefab);
+          doubleBonus.setPosition(new Vec3(0, 82, 0));
+          doubleBonus.setParent(objectPipes);
+        }
+      }
+      else {
+        // 40% dari 50%
+        if (Math.random() < 0.4) {
+          const slowmoBonus = instantiate(this.slowmoPrefab);
+          slowmoBonus.setPosition(new Vec3(56.615, 82, 0));
+          slowmoBonus.setParent(objectPipes);
+        }
+      }
 
-    this.node['hasPassed'] = false;
+    }
   }
 }
-// deprecated, cek pipa sudah dilewati atau tidak langsung saja pakai collider
-// checkPlayerPassedPipe(nodePipe: Node) {
-//   // karena burung selalu berada di koordinat 0, check kalo koordinat pipa sudah lebih kecil dari x-axis burung baru update scoringnya
-//   // Cek apakah pipa sudah lewat burung dan belum ditambahkan skornya
-//   if (nodePipe.position.x <= this.passCoordinate && !nodePipe['hasPassed']) {
-//     //cek flag hasPassed supaya skor tidak ditambah terus menerus
-//     this.addScore();  // Tambahkan skor
-//     // buat play sound kalau skornya ditambahin
-//     nodePipe['hasPassed'] = true;  // set hasPassed skor tidak nambah terus
-//     this.scoreboardNode.getComponent(AudioSource).playOneShot(this.scoreboardNode.getComponent(AudioSource).clip);
+
+
+
+// tugas prefab sebelumnya : timing
+// console.log("Timer ", this.timer);
+// this.timer += deltaTime;
+// // supaya mudah debugging tanpa harus ke console, didisplay saja
+// if (this.timerWaktu) {
+//   this.timerWaktu.string = this.timer.toFixed(2);
+// }
+// if (this.timer >= this.targetWaktu) {
+//   this.timer -= this.targetWaktu;
+//   if (this.targetWaktu > this.minimumBatasBawah) {
+//     // kurangi targetnya sebanyak increment 0.25 (penguranganJeda)
+//     this.targetWaktu = Math.max(this.targetWaktu - this.penguranganJeda, this.minimumBatasBawah);
+//   } else {
+//     // kalo udah dibawahnya, random aja (1-2)
+//     this.targetWaktu = randomRange(this.minimumBatasBawah, this.minimumBatasAtas);
 //   }
 // }
-// deprecated :
-// untuk update selector node pipa setiap detiknya,
-// karena koordinat selalu berubah sesuai kecepatan game
-    // pass ke checkPlayerPassedPipe untuk update scoring
-    // let scene = director.getScene()
-    // scene.children.forEach(child => {
-    //   if (child.name === 'Canvas') {
-      //     let canvas = child
-    //     canvas.children.forEach(canvasChild => {
-    //       if (canvasChild.name === 'Obstacle') {
-    //         // check position
-    //         this.checkPlayerPassedPipe(canvasChild)
-    //         // console.log('Obstacle1 x pos : ', canvasChild.position.x)
-    //       }
-    //       if (canvasChild.name === 'Obstacle2') {
-    //         this.checkPlayerPassedPipe(canvasChild)
-    //         // console.log('Obstacle2 x pos : ', canvasChild.position.x)
-    //       }
-    //     })
-    //   }
-    // })
