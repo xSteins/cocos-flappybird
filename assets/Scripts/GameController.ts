@@ -218,27 +218,28 @@ export class GameController extends Component {
   }
 
   showEndGameScreen() {
+    director.pause();
+    this.playSound(this.restartMenu);
     this.displayEndingScore();
-    // pause game, display node restartmenu
     // ini currentscore harus di-hide supaya gk overlap dgn tulisan game over
     this.scoreboardNode.getChildByName('CurrentScore').active = false;
-    this.restartMenu.active = true
-    this.player.active = false;
-    this.playSound(this.restartMenu);
-    this.canvasNode.getComponent(AudioSource).stop();
-    this.isPaused = true;
+    // pause game, display node restartmenu
+    try {
+      this.restartMenu.active = true;
+      this.player.active = false;
+      this.isPaused = true;
+    } catch (error) {
+      console.log("ERROR GAK JELAS DARI COCOS, PLAYER REFERENCE SUDAH ADA TAPI MASIH SUKA KEDETEKSI NULL")
+    }
     // override manual bgm
     const bgmSource = this.canvasNode.getComponent(AudioSource);
     if (bgmSource) bgmSource.stop(); // Hentikan background music
-
-    director.pause()
     // reset datanya ketika restart
     localStorage.removeItem('easyGame');
     localStorage.removeItem('isDaylight');
   }
 
   checkContactNode(selfCollider: Collider2D, otherCollider: Collider2D) {
-
     if (this.isPaused === false) {
       let otherNode = otherCollider.node;
       // cek collidernya, karena dipakai untuk bird dan collider maka harus
@@ -279,19 +280,18 @@ export class GameController extends Component {
           // play hit sound dari obstacle (hit.ogg)
           this.playSound(otherNode.parent)
         }
-
-        // Cek apakah terkena bonus slowmo
-        if (selfCollider.node.name === 'Bird' && otherNode.parent.name === 'slowmo') {
-          // aktifkan slowmo effect
-          this.activateSlowmo();
-          console.log("SLOWMO")
-          // this.setAlert("SLOWMO AKTIF");
-          // otherNode.parent.destroy(); 
-        }
+      }
+      // Cek apakah terkena bonus slowmo
+      if (selfCollider.node.name === 'Bird' && otherNode.parent.name === 'slowmo') {
+        // aktifkan slowmo effect
+        this.activateSlowmo();
+        console.log("SLOWMO")
+        // this.setAlert("SLOWMO AKTIF");
+        // otherNode.parent.destroy(); 
       }
     }
     else {
-      console.log("Game tidak dipause / invicible")
+      console.log("game berhenti")
     }
   }
   activateSlowmo() {
@@ -424,6 +424,11 @@ export class GameController extends Component {
       // else {
       //   this.canvasNode.getComponent(AudioSource).play()
       // }
+      // cek posisi burung jgn lebih / kurang dari 500px, jika lebih = endgame
+      let birdPos = this.player.position.y;
+      if (birdPos > 500 || birdPos < -500) {
+        this.showEndGameScreen();
+      }
 
       if (this.easyGame) {
         // easy mode: spawn pipe setiap 2.3 detik dengan kecepatan konstan
@@ -466,7 +471,6 @@ export class GameController extends Component {
       else {
         this.updateScrollableElement(this.backgroundNight, deltaTime, -618.078, new Vec3(-4.704, 0, 0), 0.1); // Background (parallax)
       }
-
     }
   }
 
